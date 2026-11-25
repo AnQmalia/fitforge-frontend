@@ -2,7 +2,7 @@ import { useState } from "react";
 import GeneratorTab from "./components/GeneratorTab";
 import HistoryTab from "./components/HistoryTab";
 import ExercisesTab from "./components/ExercisesTab";
-import StatsTab from "./components/StatsTab";
+import CalorieTab from "./components/CalorieTab";
 import WorkoutPlanTab from "./components/WorkoutPlanTab";
 
 function App() {
@@ -12,7 +12,7 @@ function App() {
     { id: 1, name: "Ankieta" },
     { id: 2, name: "Historia" },
     { id: 3, name: "Baza ćwiczeń" },
-    { id: 4, name: "Statystyki" },
+    { id: 4, name: "Kalkulator kalorii" },
     { id: 5, name: "Plan treningowy" },
   ];
 
@@ -25,7 +25,7 @@ function App() {
       case 3:
         return <ExercisesTab />;
       case 4:
-        return <StatsTab />;
+        return <CalorieTab />;
       case 5:
         return <WorkoutPlanTab />;
       default:

@@ -13,27 +13,45 @@ interface Exercise {
   equipmentNeeded?: string;
 }
 
+const emptyForm = {
+  name: "",
+  muscleGroupId: "",
+  equipmentNeeded: "",
+  description: "",
+};
+
 export default function ExercisesTab() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [muscleGroups, setMuscleGroups] = useState<MuscleGroup[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [selected, setSelected] = useState<Exercise | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+  const [formError, setFormError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!selected) return;
+    if (!selected && !formOpen) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setSelected(null);
+      if (event.key === "Escape") {
+        setSelected(null);
+        setFormOpen(false);
+      }
     };
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [selected]);
+  }, [selected, formOpen]);
 
   useEffect(() => {
     const fetchExercises = async () => {
       try {
-        const response = await fetch("http://localhost:5062/api/exercises");
+        const [response, groupsResponse] = await Promise.all([
+          fetch("http://localhost:5062/api/exercises"),
+          fetch("http://localhost:5062/api/musclegroups"),
+        ]);
 
         if (!response.ok) {
           throw new Error("Nie udało się pobrać bazy ćwiczeń z serwera.");
@@ -41,6 +59,10 @@ export default function ExercisesTab() {
 
         const data = await response.json();
         setExercises(data);
+
+        if (groupsResponse.ok) {
+          setMuscleGroups(await groupsResponse.json());
+        }
       } catch (err: any) {
         setError(err.message || "Błąd połączenia z serwerem.");
 
@@ -90,8 +112,67 @@ export default function ExercisesTab() {
     fetchExercises();
   }, []);
 
+  const openForm = () => {
+    setForm(emptyForm);
+    setFormError("");
+    setFormOpen(true);
+  };
+
+  const saveExercise = async () => {
+    const name = form.name.trim();
+    if (!name) {
+      setFormError("Podaj nazwę ćwiczenia.");
+      return;
+    }
+    if (!form.muscleGroupId) {
+      setFormError("Wybierz partię mięśniową.");
+      return;
+    }
+
+    setSaving(true);
+    setFormError("");
+
+    try {
+      const response = await fetch("http://localhost:5062/api/exercises", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          muscleGroupId: Number(form.muscleGroupId),
+          equipmentNeeded: form.equipmentNeeded.trim(),
+          description: form.description.trim(),
+        }),
+      });
+
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || "Nie udało się zapisać ćwiczenia.");
+      }
+
+      const created: Exercise = await response.json();
+      setExercises((current) => [...current, created]);
+      setFormOpen(false);
+      setForm(emptyForm);
+    } catch (err: any) {
+      setFormError(err.message || "Błąd połączenia z serwerem.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="w-full max-w-6xl mx-auto px-4">
+      {!loading && !error && (
+        <div className="mb-6 flex justify-end">
+          <button
+            type="button"
+            onClick={openForm}
+            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
+          >
+            Dodaj ćwiczenie
+          </button>
+        </div>
+      )}
       {loading && (
         <div className="text-center text-gray-400 py-12 text-lg">
           Pobieranie ćwiczeń...
@@ -155,6 +236,119 @@ export default function ExercisesTab() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {formOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6"
+          onClick={() => setFormOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-exercise-title"
+            className="w-full max-w-lg bg-gray-800 border border-gray-700 rounded-2xl p-6 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex justify-between items-start gap-4">
+              <h3 id="add-exercise-title" className="text-xl font-bold text-white">
+                Nowe ćwiczenie
+              </h3>
+              <button
+                type="button"
+                onClick={() => setFormOpen(false)}
+                className="text-gray-400 hover:text-white text-sm"
+              >
+                Zamknij
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              <label className="block text-sm text-gray-300">
+                Nazwa
+                <input
+                  value={form.name}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, name: event.target.value }))
+                  }
+                  className="mt-1 w-full rounded-xl border border-gray-600 bg-gray-900 px-3 py-2 text-white"
+                />
+              </label>
+
+              <label className="block text-sm text-gray-300">
+                Partia mięśniowa
+                <select
+                  value={form.muscleGroupId}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      muscleGroupId: event.target.value,
+                    }))
+                  }
+                  className="mt-1 w-full rounded-xl border border-gray-600 bg-gray-900 px-3 py-2 text-white"
+                >
+                  <option value="">Wybierz</option>
+                  {muscleGroups.map((group) => (
+                    <option key={group.id} value={group.id}>
+                      {group.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="block text-sm text-gray-300">
+                Sprzęt
+                <input
+                  value={form.equipmentNeeded}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      equipmentNeeded: event.target.value,
+                    }))
+                  }
+                  className="mt-1 w-full rounded-xl border border-gray-600 bg-gray-900 px-3 py-2 text-white"
+                />
+              </label>
+
+              <label className="block text-sm text-gray-300">
+                Opis
+                <textarea
+                  value={form.description}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      description: event.target.value,
+                    }))
+                  }
+                  rows={3}
+                  className="mt-1 w-full rounded-xl border border-gray-600 bg-gray-900 px-3 py-2 text-white"
+                />
+              </label>
+
+              {formError && (
+                <p className="text-sm text-red-300">{formError}</p>
+              )}
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setFormOpen(false)}
+                  className="rounded-xl px-4 py-2 text-sm text-gray-300 hover:text-white"
+                >
+                  Anuluj
+                </button>
+                <button
+                  type="button"
+                  onClick={saveExercise}
+                  disabled={saving}
+                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-60"
+                >
+                  {saving ? "Zapisywanie..." : "Zapisz"}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
