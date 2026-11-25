@@ -3,17 +3,17 @@ import GeneratorTab from "./components/GeneratorTab";
 import HistoryTab from "./components/HistoryTab";
 import ExercisesTab from "./components/ExercisesTab";
 import StatsTab from "./components/StatsTab";
-import SettingsTab from "./components/SettingsTab";
+import WorkoutPlanTab from "./components/WorkoutPlanTab";
 
 function App() {
   const [activeTab, setActiveTab] = useState<number>(1);
 
   const tabs = [
     { id: 1, name: "Ankieta" },
-    { id: 2, name: "Zakładka 2 (Historia)" },
+    { id: 2, name: "Historia" },
     { id: 3, name: "Baza ćwiczeń" },
-    { id: 4, name: "Zakładka 4 (Statystyki)" },
-    { id: 5, name: "Zakładka 5 (Ustawienia)" },
+    { id: 4, name: "Statystyki" },
+    { id: 5, name: "Plan treningowy" },
   ];
 
   const renderActiveComponent = () => {
@@ -27,38 +27,41 @@ function App() {
       case 4:
         return <StatsTab />;
       case 5:
-        return <SettingsTab />;
+        return <WorkoutPlanTab />;
       default:
         return <GeneratorTab />;
     }
   };
 
   return (
-    <div className="flex h-screen bg-green-900 text-white overflow-hidden">
-      <aside className="w-72 bg-black flex flex-col justify-start pt-12 px-4 space-y-3 shadow-2xl shrink-0">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-extrabold text-green-400 h-80">
-            Kocham kaucje
-          </h1>
+    <div className="flex h-screen bg-canvas text-white overflow-hidden">
+      <aside className="w-64 bg-sidebar border-r border-line flex flex-col px-4 py-8 shrink-0">
+        <div className="px-3 mb-8">
+          <p className="text-[11px] uppercase tracking-[0.22em] text-mint">FitForge</p>
+          <h1 className="mt-2 text-xl font-semibold tracking-tight text-white">.NET Projekt</h1>
         </div>
 
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`w-full py-3 px-4 rounded-4xl font-bold text-center transition-all duration-200 ${
-              activeTab === tab.id
-                ? "bg-green-600 text-white shadow-lg translate-x-1"
-                : "bg-green-700/40 text-gray-300 hover:bg-green-700 hover:text-white"
-            }`}
-          >
-            {tab.name}
-          </button>
-        ))}
+        <nav className="flex flex-col gap-1">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`w-full px-3 py-2.5 rounded-xl text-left text-sm font-medium transition-colors ${
+                activeTab === tab.id
+                  ? "bg-mint/15 text-mint"
+                  : "text-muted hover:bg-surface hover:text-white"
+              }`}
+            >
+              {tab.name}
+            </button>
+          ))}
+        </nav>
       </aside>
 
-      <main className="flex-1 overflow-y-auto p-10 flex items-center justify-center bg-black">
-        {renderActiveComponent()}
+      <main className="flex-1 overflow-y-auto bg-canvas">
+        <div className="min-h-full w-full flex flex-col items-center justify-center px-6 py-8 md:px-10">
+          {renderActiveComponent()}
+        </div>
       </main>
     </div>
   );
