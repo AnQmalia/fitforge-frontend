@@ -384,13 +384,13 @@ export default function ExercisesTab() {
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Szukaj ćwiczenia po nazwie"
               aria-label="Szukaj ćwiczenia po nazwie"
-              className="w-80 rounded-full border border-gray-600 bg-gray-900 px-5 py-2.5 text-base text-white placeholder:text-gray-500 sm:w-96"
+              className="w-80 rounded-full border border-line bg-inset px-5 py-2.5 text-base text-white placeholder:text-muted outline-none focus:border-mint sm:w-96"
             />
             {!error ? (
               <button
                 type="button"
                 onClick={openForm}
-                className="justify-self-end rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
+                className="justify-self-end rounded-full bg-mint-strong px-4 py-2 text-sm font-semibold text-canvas hover:bg-mint transition-colors"
               >
                 Dodaj ćwiczenie
               </button>
@@ -405,10 +405,10 @@ export default function ExercisesTab() {
               aria-label="Ulubione"
               aria-pressed={favoritesOnly}
               onClick={() => setFavoritesOnly((current) => !current)}
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border ${
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border transition-colors ${
                 favoritesOnly
                   ? "border-amber-400 bg-amber-950/40 text-amber-200"
-                  : "border-gray-600 bg-gray-800 text-gray-200 hover:border-gray-500"
+                  : "border-line bg-surface text-mist hover:border-mint/50"
               }`}
             >
               <svg
@@ -443,15 +443,15 @@ export default function ExercisesTab() {
                       onClick={() => toggleGroup(group.id)}
                       className={
                         icon || isPulse
-                          ? `flex h-12 w-12 items-center justify-center overflow-hidden rounded-md border ${
+                          ? `flex h-12 w-12 items-center justify-center overflow-hidden rounded-md border transition-colors ${
                               active
-                                ? "border-blue-400 bg-gray-800"
-                                : "border-gray-600 bg-gray-900 hover:border-gray-500"
+                                ? "border-mint bg-surface"
+                                : "border-line bg-inset hover:border-mint/50"
                             }`
-                          : `rounded-md border px-3 py-1.5 text-sm ${
+                          : `rounded-md border px-3 py-1.5 text-sm transition-colors ${
                               active
-                                ? "border-blue-400 bg-blue-600 text-white"
-                                : "border-gray-600 bg-gray-900 text-gray-300 hover:border-gray-500"
+                                ? "border-mint bg-mint/15 text-mint"
+                                : "border-line bg-inset text-mist hover:border-mint/50"
                             }`
                       }
                     >
@@ -472,10 +472,10 @@ export default function ExercisesTab() {
               aria-label="Filtry"
               aria-expanded={filtersOpen}
               onClick={() => setFiltersOpen((open) => !open)}
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border ${
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border transition-colors ${
                 filtersOpen || selectedGroupIds.length > 0
-                  ? "border-blue-500 bg-blue-950/50 text-blue-200"
-                  : "border-gray-600 bg-gray-800 text-gray-200 hover:border-gray-500"
+                  ? "border-mint bg-mint/15 text-mint"
+                  : "border-line bg-surface text-mist hover:border-mint/50"
               }`}
             >
               <svg
@@ -496,19 +496,19 @@ export default function ExercisesTab() {
         </div>
       )}
       {loading && (
-        <div className="text-center text-gray-400 py-12 text-lg">
+        <div className="text-center text-muted py-12 text-lg">
           Pobieranie ćwiczeń...
         </div>
       )}
 
       {error && (
-        <div className="mb-6 p-4 bg-blue-900/30 border border-blue-700/50 text-blue-300 rounded-xl text-center text-sm shadow-lg">
+        <div className="mb-6 p-4 bg-surface border border-mint/30 text-mint rounded-xl text-center text-sm">
           Serwer backendu nie zwrócił danych (lub jest wyłączony).
         </div>
       )}
 
       {!loading && visibleExercises.length === 0 && (
-        <p className="py-8 text-center text-sm text-gray-400">
+        <p className="py-8 text-center text-sm text-muted">
           Brak ćwiczeń dla tych filtrów.
         </p>
       )}
@@ -518,11 +518,11 @@ export default function ExercisesTab() {
           {visibleExercises.map((exercise) => (
             <div
               key={exercise.id}
-              className="bg-gray-800 border border-gray-700/80 rounded-2xl p-6 shadow-xl hover:border-blue-500 hover:shadow-2xl transition-all duration-300 flex flex-col justify-between group"
+              className="bg-surface border border-line rounded-2xl p-6 hover:border-mint/60 transition-colors flex flex-col justify-between group"
             >
               <div>
                 <div className="flex justify-between items-start mb-3">
-                  <h3 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors">
+                  <h3 className="text-lg font-bold text-white group-hover:text-mint transition-colors">
                     {exercise.name}
                   </h3>
                   <button
@@ -537,41 +537,41 @@ export default function ExercisesTab() {
                     className={`text-lg leading-none ${
                       favoriteIds.includes(exercise.id)
                         ? "text-amber-300"
-                        : "text-gray-500 hover:text-amber-200"
+                        : "text-muted hover:text-amber-200"
                     }`}
                   >
                     {favoriteIds.includes(exercise.id) ? "★" : "☆"}
                   </button>
                 </div>
 
-                <div className="space-y-2 text-sm text-gray-300">
+                <div className="space-y-2 text-sm text-mist">
                   {exercise.muscleGroup?.name && (
                     <p className="flex items-center space-x-2">
-                      <span className="text-gray-400">Partia:</span>
-                      <span className="font-medium text-blue-300 bg-blue-950/40 px-2 py-0.5 rounded border border-blue-800/50">
+                      <span className="text-muted">Partia:</span>
+                      <span className="font-medium text-mint bg-mint/10 px-2 py-0.5 rounded border border-mint/25">
                         {exercise.muscleGroup.name}
                       </span>
                     </p>
                   )}
                   {exercise.equipmentNeeded && (
-                    <p className="text-gray-400">
-                      <span className="text-gray-400 font-medium">Sprzęt:</span>{" "}
+                    <p className="text-muted">
+                      <span className="text-muted font-medium">Sprzęt:</span>{" "}
                       {exercise.equipmentNeeded}
                     </p>
                   )}
                   {exercise.description && (
-                    <p className="mt-3 text-gray-400 text-xs leading-relaxed line-clamp-3">
+                    <p className="mt-3 text-muted text-xs leading-relaxed line-clamp-3">
                       {exercise.description}
                     </p>
                   )}
                 </div>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-gray-700/50 flex justify-between items-center text-xs text-gray-500">
+              <div className="mt-6 pt-4 border-t border-line flex justify-between items-center text-xs text-muted">
                 <button
                   type="button"
                   onClick={() => setSelected(exercise)}
-                  className="text-blue-400 font-semibold hover:underline"
+                  className="text-mint font-semibold hover:underline"
                 >
                   Szczegóły &rarr;
                 </button>
@@ -580,7 +580,7 @@ export default function ExercisesTab() {
                     <button
                       type="button"
                       onClick={() => openEditForm(exercise)}
-                      className="font-semibold text-gray-300 hover:text-white hover:underline"
+                      className="font-semibold text-mist hover:text-white hover:underline"
                     >
                       Edytuj
                     </button>
@@ -601,14 +601,14 @@ export default function ExercisesTab() {
 
       {formOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-6"
           onClick={closeForm}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="add-exercise-title"
-            className="w-full max-w-lg bg-gray-800 border border-gray-700 rounded-2xl p-6 shadow-2xl"
+            className="w-full max-w-lg bg-surface border border-line rounded-2xl p-6 shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex justify-between items-start gap-4">
@@ -619,25 +619,25 @@ export default function ExercisesTab() {
                 type="button"
                 onClick={closeForm}
                 disabled={saving}
-                className="text-gray-400 hover:text-white text-sm disabled:opacity-60"
+                className="text-muted hover:text-white text-sm disabled:opacity-60"
               >
                 Zamknij
               </button>
             </div>
 
             <div className="mt-4 space-y-3">
-              <label className="block text-sm text-gray-300">
+              <label className="block text-sm text-mist">
                 Nazwa
                 <input
                   value={form.name}
                   onChange={(event) =>
                     setForm((current) => ({ ...current, name: event.target.value }))
                   }
-                  className="mt-1 w-full rounded-xl border border-gray-600 bg-gray-900 px-3 py-2 text-white"
+                  className="mt-1 w-full rounded-xl border border-line bg-inset px-3 py-2 text-white outline-none focus:border-mint"
                 />
               </label>
 
-              <label className="block text-sm text-gray-300">
+              <label className="block text-sm text-mist">
                 Partia mięśniowa
                 <select
                   value={form.muscleGroupId}
@@ -647,7 +647,7 @@ export default function ExercisesTab() {
                       muscleGroupId: event.target.value,
                     }))
                   }
-                  className="mt-1 w-full rounded-xl border border-gray-600 bg-gray-900 px-3 py-2 text-white"
+                  className="mt-1 w-full rounded-xl border border-line bg-inset px-3 py-2 text-white outline-none focus:border-mint"
                 >
                   <option value="">Wybierz</option>
                   {groups.map((group) => (
@@ -658,7 +658,7 @@ export default function ExercisesTab() {
                 </select>
               </label>
 
-              <label className="block text-sm text-gray-300">
+              <label className="block text-sm text-mist">
                 Sprzęt
                 <input
                   value={form.equipmentNeeded}
@@ -668,11 +668,11 @@ export default function ExercisesTab() {
                       equipmentNeeded: event.target.value,
                     }))
                   }
-                  className="mt-1 w-full rounded-xl border border-gray-600 bg-gray-900 px-3 py-2 text-white"
+                  className="mt-1 w-full rounded-xl border border-line bg-inset px-3 py-2 text-white outline-none focus:border-mint"
                 />
               </label>
 
-              <label className="block text-sm text-gray-300">
+              <label className="block text-sm text-mist">
                 Opis
                 <textarea
                   value={form.description}
@@ -683,7 +683,7 @@ export default function ExercisesTab() {
                     }))
                   }
                   rows={3}
-                  className="mt-1 w-full rounded-xl border border-gray-600 bg-gray-900 px-3 py-2 text-white"
+                  className="mt-1 w-full rounded-xl border border-line bg-inset px-3 py-2 text-white outline-none focus:border-mint"
                 />
               </label>
 
@@ -696,7 +696,7 @@ export default function ExercisesTab() {
                   type="button"
                   onClick={closeForm}
                   disabled={saving}
-                  className="rounded-xl px-4 py-2 text-sm text-gray-300 hover:text-white disabled:opacity-60"
+                  className="rounded-xl px-4 py-2 text-sm text-muted hover:text-white disabled:opacity-60"
                 >
                   Anuluj
                 </button>
@@ -704,7 +704,7 @@ export default function ExercisesTab() {
                   type="button"
                   onClick={saveExercise}
                   disabled={saving}
-                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-60"
+                  className="rounded-xl bg-mint-strong px-4 py-2 text-sm font-semibold text-canvas hover:bg-mint disabled:opacity-60 transition-colors"
                 >
                   {saving ? "Zapisywanie..." : "Zapisz"}
                 </button>
@@ -716,7 +716,7 @@ export default function ExercisesTab() {
 
       {pendingDelete && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-6"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/75 p-6"
           onClick={() => {
             if (!deleting) setPendingDelete(null);
           }}
@@ -725,20 +725,20 @@ export default function ExercisesTab() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-exercise-title"
-            className="w-full max-w-md rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-2xl"
+            className="w-full max-w-md rounded-2xl border border-line bg-surface p-6 shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
             <h3 id="delete-exercise-title" className="text-xl font-bold text-white">
               Usunąć ćwiczenie?
             </h3>
-            <p className="mt-3 text-sm text-gray-300">{pendingDelete.name}</p>
+            <p className="mt-3 text-sm text-mist">{pendingDelete.name}</p>
             {deleteError && <p className="mt-3 text-sm text-red-300">{deleteError}</p>}
             <div className="mt-5 flex justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setPendingDelete(null)}
                 disabled={deleting}
-                className="rounded-xl px-4 py-2 text-sm text-gray-300 hover:text-white disabled:opacity-60"
+                className="rounded-xl px-4 py-2 text-sm text-muted hover:text-white disabled:opacity-60"
               >
                 Anuluj
               </button>
@@ -757,14 +757,14 @@ export default function ExercisesTab() {
 
       {selected && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-6"
           onClick={() => setSelected(null)}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="exercise-details-title"
-            className="w-full max-w-lg bg-gray-800 border border-gray-700 rounded-2xl p-6 shadow-2xl"
+            className="w-full max-w-lg bg-surface border border-line rounded-2xl p-6 shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex justify-between items-start gap-4">
@@ -777,26 +777,26 @@ export default function ExercisesTab() {
               <button
                 type="button"
                 onClick={() => setSelected(null)}
-                className="text-gray-400 hover:text-white text-sm"
+                className="text-muted hover:text-white text-sm"
               >
                 Zamknij
               </button>
             </div>
 
-            <div className="mt-4 space-y-2 text-sm text-gray-300">
+            <div className="mt-4 space-y-2 text-sm text-mist">
               {selected.muscleGroup?.name && (
                 <p>
-                  <span className="text-gray-400">Partia: </span>
+                  <span className="text-muted">Partia: </span>
                   {selected.muscleGroup.name}
                 </p>
               )}
               {selected.equipmentNeeded && (
                 <p>
-                  <span className="text-gray-400">Sprzęt: </span>
+                  <span className="text-muted">Sprzęt: </span>
                   {selected.equipmentNeeded}
                 </p>
               )}
-              <p className="pt-2 text-gray-300 leading-relaxed">
+              <p className="pt-2 text-mist leading-relaxed">
                 {selected.description || "Opis ćwiczenia."}
               </p>
             </div>

@@ -23,12 +23,14 @@ body {
 
 input,
 select,
+textarea,
 button {
   font-family: inherit;
 }
 
 input,
-select {
+select,
+textarea {
   color-scheme: dark;
 }
 

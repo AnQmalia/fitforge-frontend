@@ -217,23 +217,23 @@ export default function WorkoutPlanTab() {
 
   return (
     <div className="w-full max-w-xl">
-      <section className="bg-gray-800 border border-gray-700/80 rounded-2xl p-6 shadow-xl">
+      <section className="bg-surface border border-line rounded-2xl p-6">
         <h2 className="text-2xl font-bold text-white">Plan treningowy</h2>
-        <p className="mt-2 text-sm text-gray-400">
+        <p className="mt-2 text-sm text-muted">
           Dodaj ćwiczenie z bazy. Każda seria ma swój ciężar i liczbę powtórzeń.
         </p>
 
-        {loading && <p className="mt-6 text-gray-400">Ładowanie...</p>}
+        {loading && <p className="mt-6 text-muted">Ładowanie...</p>}
 
         {loadError && (
-          <p className="mt-6 p-4 bg-blue-900/30 border border-blue-700/50 text-blue-300 rounded-xl text-sm">
+          <p className="mt-6 p-4 bg-inset border border-mint/30 text-mint rounded-xl text-sm">
             Serwer backendu nie zwrócił danych (lub jest wyłączony).
           </p>
         )}
 
         {!loading && !loadError && (
           <>
-            <label className="block mt-5 text-sm text-gray-300" htmlFor="plan-name">
+            <label className="block mt-5 text-sm text-mist" htmlFor="plan-name">
               Nazwa planu
             </label>
             <input
@@ -243,31 +243,31 @@ export default function WorkoutPlanTab() {
                 setPlanName(event.target.value);
                 setSavedMessage("");
               }}
-              className="mt-1.5 w-full rounded-xl bg-gray-900 border border-gray-600 px-3 py-2.5 text-white outline-none focus:border-green-500"
+              className="mt-1.5 w-full rounded-xl bg-inset border border-line px-3 py-2.5 text-white outline-none focus:border-mint"
             />
 
             <button
               type="button"
               onClick={() => setPickerOpen(true)}
-              className="mt-4 w-full py-3 rounded-2xl font-bold bg-gray-900 border border-green-700 text-green-300 hover:bg-green-950"
+              className="mt-4 w-full py-3 rounded-2xl font-bold bg-inset border border-mint-strong/70 text-mint hover:bg-mint/10 transition-colors"
             >
               Dodaj ćwiczenie
             </button>
 
             {draft.length === 0 && (
-              <p className="mt-4 text-sm text-gray-400">Plan jest pusty.</p>
+              <p className="mt-4 text-sm text-muted">Plan jest pusty.</p>
             )}
 
             <div className="mt-4 space-y-4">
               {draft.map((exercise, index) => (
-                <article key={exercise.key} className="bg-gray-900 border border-gray-700 rounded-2xl p-4">
+                <article key={exercise.key} className="bg-inset border border-line rounded-2xl p-4">
                   <div className="flex justify-between gap-3">
                     <div>
                       <h3 className="font-bold text-white">
                         {index + 1}. {exercise.exerciseName}
                       </h3>
                       {exercise.muscleGroup && (
-                        <p className="text-xs text-gray-400">{exercise.muscleGroup}</p>
+                        <p className="text-xs text-muted">{exercise.muscleGroup}</p>
                       )}
                     </div>
                     <button
@@ -282,23 +282,23 @@ export default function WorkoutPlanTab() {
                   <div className="mt-3 space-y-2">
                     {exercise.sets.map((set, setIndex) => (
                       <div key={set.key}>
-                        <div className="bg-gray-800 border border-gray-700 rounded-xl p-3">
+                        <div className="bg-surface border border-line rounded-xl p-3">
                           <div className="flex justify-between items-center mb-2">
-                            <span className="text-xs font-semibold text-gray-400">
+                            <span className="text-xs font-semibold text-muted">
                               Seria {setIndex + 1}
                             </span>
                             {exercise.sets.length > 1 && (
                               <button
                                 type="button"
                                 onClick={() => removeSet(exercise.key, set.key)}
-                                className="text-xs text-gray-500 hover:text-red-300"
+                                className="text-xs text-muted hover:text-red-300"
                               >
                                 Usuń serię
                               </button>
                             )}
                           </div>
                           <div className="grid grid-cols-2 gap-2">
-                            <label className="text-xs text-gray-400">
+                            <label className="text-xs text-muted">
                               Ciężar (kg)
                               <input
                                 type="number"
@@ -308,10 +308,10 @@ export default function WorkoutPlanTab() {
                                 onChange={(event) =>
                                   updateSet(exercise.key, set.key, { weight: event.target.value })
                                 }
-                                className="mt-1 w-full rounded-lg bg-gray-900 border border-gray-600 px-2 py-2 text-sm text-white"
+                                className="mt-1 w-full rounded-lg bg-inset border border-line px-2 py-2 text-sm text-white outline-none focus:border-mint"
                               />
                             </label>
-                            <label className="text-xs text-gray-400">
+                            <label className="text-xs text-muted">
                               Powtórzenia
                               <input
                                 type="number"
@@ -321,7 +321,7 @@ export default function WorkoutPlanTab() {
                                 onChange={(event) =>
                                   updateSet(exercise.key, set.key, { reps: event.target.value })
                                 }
-                                className="mt-1 w-full rounded-lg bg-gray-900 border border-gray-600 px-2 py-2 text-sm text-white"
+                                className="mt-1 w-full rounded-lg bg-inset border border-line px-2 py-2 text-sm text-white outline-none focus:border-mint"
                               />
                             </label>
                           </div>
@@ -334,7 +334,7 @@ export default function WorkoutPlanTab() {
                     type="button"
                     onClick={() => addSet(exercise.key)}
                     aria-label={`Dodaj serię do ${exercise.exerciseName}`}
-                    className="mt-2 flex h-9 w-9 items-center justify-center rounded-full bg-green-600 hover:bg-green-500 text-xl font-bold leading-none"
+                    className="mt-2 flex h-9 w-9 items-center justify-center rounded-full bg-mint-strong text-canvas hover:bg-mint text-xl font-bold leading-none transition-colors"
                   >
                     +
                   </button>
@@ -343,13 +343,13 @@ export default function WorkoutPlanTab() {
             </div>
 
             {formError && <p className="mt-4 text-sm text-red-400">{formError}</p>}
-            {savedMessage && <p className="mt-4 text-sm text-green-300">{savedMessage}</p>}
+            {savedMessage && <p className="mt-4 text-sm text-mint">{savedMessage}</p>}
 
             <button
               type="button"
               onClick={savePlan}
               disabled={saving}
-              className="mt-5 w-full py-3 rounded-2xl font-bold bg-green-600 hover:bg-green-500 disabled:opacity-60"
+              className="mt-5 w-full py-3 rounded-2xl font-bold bg-mint-strong text-canvas hover:bg-mint disabled:opacity-60 transition-colors"
             >
               {saving ? "Zapisywanie..." : "Zapisz plan"}
             </button>
@@ -369,7 +369,7 @@ export default function WorkoutPlanTab() {
             }
 
             return (
-              <article key={plan.id} className="bg-gray-800 border border-gray-700/80 rounded-2xl p-5">
+              <article key={plan.id} className="bg-surface border border-line rounded-2xl p-5">
                 <h4 className="text-lg font-bold text-white">{plan.name}</h4>
                 <div className="mt-3 space-y-3">
                   {[...groups.entries()]
@@ -383,7 +383,7 @@ export default function WorkoutPlanTab() {
                             .map((set) => (
                               <li
                                 key={set.id}
-                                className="bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-sm text-gray-300"
+                                className="bg-inset border border-line rounded-xl px-3 py-2 text-sm text-mist"
                               >
                                 Seria {set.setNumber}: {set.weight} kg × {set.targetReps} powtórzeń
                               </li>
@@ -400,14 +400,14 @@ export default function WorkoutPlanTab() {
 
       {pickerOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-6"
           onClick={() => setPickerOpen(false)}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="exercise-picker-title"
-            className="w-full max-w-lg max-h-[80vh] overflow-y-auto bg-gray-800 border border-gray-700 rounded-2xl p-5 shadow-2xl"
+            className="w-full max-w-lg max-h-[80vh] overflow-y-auto bg-surface border border-line rounded-2xl p-5 shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex justify-between items-center gap-3">
@@ -417,7 +417,7 @@ export default function WorkoutPlanTab() {
               <button
                 type="button"
                 onClick={() => setPickerOpen(false)}
-                className="text-sm text-gray-400 hover:text-white"
+                className="text-sm text-muted hover:text-white"
               >
                 Zamknij
               </button>
@@ -428,11 +428,11 @@ export default function WorkoutPlanTab() {
                   <button
                     type="button"
                     onClick={() => addExercise(exercise)}
-                    className="w-full text-left bg-gray-900 border border-gray-700 hover:border-green-600 rounded-xl px-4 py-3"
+                    className="w-full text-left bg-inset border border-line hover:border-mint rounded-xl px-4 py-3 transition-colors"
                   >
                     <span className="block font-medium text-white">{exercise.name}</span>
                     {exercise.muscleGroup?.name && (
-                      <span className="block text-xs text-gray-400">{exercise.muscleGroup.name}</span>
+                      <span className="block text-xs text-muted">{exercise.muscleGroup.name}</span>
                     )}
                   </button>
                 </li>

@@ -186,7 +186,7 @@ export default function GeneratorTab() {
     <div className="w-full max-w-2xl space-y-6">
       <form
         onSubmit={handleSubmit}
-        className="w-full bg-gray-800 border border-gray-700/80 rounded-2xl p-8 shadow-xl"
+        className="w-full bg-surface border border-line rounded-2xl p-8"
         noValidate
       >
         <h2 className="text-2xl font-bold text-white">Ankieta</h2>
@@ -295,7 +295,7 @@ export default function GeneratorTab() {
         </div>
 
         {saved && (
-          <p className="mt-5 text-sm text-green-300 bg-green-950/40 border border-green-800/50 rounded-xl px-4 py-3">
+          <p className="mt-5 text-sm text-mint bg-mint/10 border border-mint/30 rounded-xl px-4 py-3">
             Ankieta zapisana. Możesz zmienić odpowiedzi i zapisać je ponownie.
           </p>
         )}
@@ -303,7 +303,7 @@ export default function GeneratorTab() {
         <button
           type="submit"
           disabled={generating}
-          className="mt-6 w-full py-3 rounded-2xl font-bold bg-green-600 hover:bg-green-500 disabled:opacity-60 transition-colors"
+          className="mt-6 w-full py-3 rounded-2xl font-bold bg-mint-strong text-canvas hover:bg-mint disabled:opacity-60 transition-colors"
         >
           {generating
             ? "Generowanie propozycji planu..."
@@ -318,27 +318,27 @@ export default function GeneratorTab() {
       )}
 
       {generatedPlan && (
-        <section className="w-full rounded-2xl border border-gray-700/80 bg-gray-800 p-8 shadow-xl">
+        <section className="w-full rounded-2xl border border-line bg-surface p-8">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="text-xl font-bold text-white">
               Propozycja planu treningowego
             </h3>
             {generatedPlan.source === "openai" && (
-              <span className="rounded-full border border-green-700/60 bg-green-950/50 px-3 py-1 text-xs font-medium text-green-300">
+              <span className="rounded-full border border-mint/30 bg-mint/10 px-3 py-1 text-xs font-medium text-mint">
                 OpenAI
               </span>
             )}
           </div>
 
           {generatedPlan.source === "local" && (
-            <p className="mt-2 text-xs text-gray-400">
+            <p className="mt-2 text-xs text-muted">
               Propozycja ułożona na podstawie bazy ćwiczeń (po dodaniu{" "}
-              <code className="text-gray-300">OpenAi:ApiKey</code> w konfiguracji
+              <code className="text-mist">OpenAi:ApiKey</code> w konfiguracji
               API plan wygeneruje OpenAI).
             </p>
           )}
 
-          <div className="mt-4 whitespace-pre-wrap rounded-xl border border-gray-700 bg-gray-900 p-5 text-sm leading-relaxed text-gray-200">
+          <div className="mt-4 whitespace-pre-wrap rounded-xl border border-line bg-inset p-5 text-sm leading-relaxed text-mist">
             {generatedPlan.planContent}
           </div>
         </section>
@@ -348,10 +348,10 @@ export default function GeneratorTab() {
 }
 
 function inputClass(invalid: boolean) {
-  return `w-full rounded-xl bg-gray-900 border px-3 py-2.5 text-white outline-none transition-colors ${
+  return `w-full rounded-xl bg-inset border px-3 py-2.5 text-white placeholder:text-muted outline-none transition-colors ${
     invalid
       ? "border-red-500 focus:border-red-400"
-      : "border-gray-600 focus:border-green-500"
+      : "border-line focus:border-mint"
   }`;
 }
 
@@ -366,7 +366,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="block mb-1.5 text-sm font-medium text-gray-300">
+      <span className="block mb-1.5 text-sm font-medium text-mist">
         {label}
       </span>
       {children}

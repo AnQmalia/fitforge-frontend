@@ -63,20 +63,20 @@ export default function HistoryTab() {
   return (
     <div className="w-full max-w-2xl">
       <h2 className="text-2xl font-bold text-white">Historia</h2>
-      <p className="mt-2 text-sm text-gray-400">
+      <p className="mt-2 text-sm text-muted">
         Prowizoryczny podgląd zapisanych planów, od najnowszego.
       </p>
 
-      {loading && <p className="mt-6 text-gray-400">Ładowanie historii...</p>}
+      {loading && <p className="mt-6 text-muted">Ładowanie historii...</p>}
 
       {error && (
-        <p className="mt-6 p-4 bg-blue-900/30 border border-blue-700/50 text-blue-300 rounded-xl text-sm">
+        <p className="mt-6 p-4 bg-surface border border-mint/30 text-mint rounded-xl text-sm">
           Serwer backendu nie zwrócił danych (lub jest wyłączony).
         </p>
       )}
 
       {!loading && !error && plans.length === 0 && (
-        <p className="mt-6 text-sm text-gray-400">
+        <p className="mt-6 text-sm text-muted">
           Nie ma jeszcze zapisanych planów. Ułóż pierwszy w zakładce Plan treningowy.
         </p>
       )}
@@ -84,10 +84,10 @@ export default function HistoryTab() {
       {!loading && !error && plans.length > 0 && (
         <div className="mt-6 space-y-4">
           {plans.map((plan) => (
-            <article key={plan.id} className="bg-gray-800 border border-gray-700/80 rounded-2xl p-5">
+            <article key={plan.id} className="bg-surface border border-line rounded-2xl p-5">
               <div className="flex justify-between gap-3 items-start">
                 <h3 className="text-lg font-bold text-white">{plan.name}</h3>
-                <span className="text-xs text-gray-400 shrink-0">{formatDate(plan.createdAt)}</span>
+                <span className="text-xs text-muted shrink-0">{formatDate(plan.createdAt)}</span>
               </div>
               <div className="mt-3 space-y-3">
                 {groupExercises(plan.items).map((exercise) => (
@@ -97,7 +97,7 @@ export default function HistoryTab() {
                       {exercise.sets.map((set) => (
                         <li
                           key={set.id}
-                          className="bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-sm text-gray-300"
+                          className="bg-inset border border-line rounded-xl px-3 py-2 text-sm text-mist"
                         >
                           Seria {set.setNumber}: {set.weight} kg × {set.targetReps} powtórzeń
                         </li>
