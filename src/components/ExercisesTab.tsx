@@ -119,20 +119,24 @@ export default function ExercisesTab() {
   const [selectedGroupIds, setSelectedGroupIds] = useState<number[]>([]);
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [favoriteIds, setFavoriteIds] = useState<number[]>(readFavorites);
+  const [pendingDelete, setPendingDelete] = useState<Exercise | null>(null);
+  const [deleteError, setDeleteError] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    if (!selected && !formOpen) return;
+    if (!selected && !formOpen && !pendingDelete) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setSelected(null);
         setFormOpen(false);
+        setPendingDelete(null);
       }
     };
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [selected, formOpen]);
+  }, [selected, formOpen, pendingDelete]);
 
   useEffect(() => {
     const fetchExercises = async () => {
@@ -292,6 +296,44 @@ export default function ExercisesTab() {
       setFormError(err.message || "Błąd połączenia z serwerem.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const requestDelete = (exercise: Exercise) => {
+    setDeleteError("");
+    setPendingDelete(exercise);
+  };
+
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+
+    setDeleting(true);
+    setDeleteError("");
+
+    try {
+      const response = await fetch(
+        `http://localhost:5062/api/exercises/${pendingDelete.id}`,
+        { method: "DELETE" },
+      );
+
+      if (!response.ok) {
+        const message = (await response.text()).trim();
+        throw new Error(message || "Nie udało się usunąć ćwiczenia.");
+      }
+
+      const id = pendingDelete.id;
+      setExercises((current) => current.filter((item) => item.id !== id));
+      setFavoriteIds((current) => {
+        const next = current.filter((item) => item !== id);
+        localStorage.setItem(FAVORITES_KEY, JSON.stringify(next));
+        return next;
+      });
+      setSelected((current) => (current?.id === id ? null : current));
+      setPendingDelete(null);
+    } catch (err: unknown) {
+      setDeleteError(err instanceof Error ? err.message : "Błąd połączenia z serwerem.");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -498,6 +540,15 @@ export default function ExercisesTab() {
                 >
                   Szczegóły &rarr;
                 </button>
+                {!error && (
+                  <button
+                    type="button"
+                    onClick={() => requestDelete(exercise)}
+                    className="font-semibold text-red-300 hover:underline"
+                  >
+                    Usuń
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -612,6 +663,47 @@ export default function ExercisesTab() {
                   {saving ? "Zapisywanie..." : "Zapisz"}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {pendingDelete && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-6"
+          onClick={() => {
+            if (!deleting) setPendingDelete(null);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-exercise-title"
+            className="w-full max-w-md rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3 id="delete-exercise-title" className="text-xl font-bold text-white">
+              Usunąć ćwiczenie?
+            </h3>
+            <p className="mt-3 text-sm text-gray-300">{pendingDelete.name}</p>
+            {deleteError && <p className="mt-3 text-sm text-red-300">{deleteError}</p>}
+            <div className="mt-5 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setPendingDelete(null)}
+                disabled={deleting}
+                className="rounded-xl px-4 py-2 text-sm text-gray-300 hover:text-white disabled:opacity-60"
+              >
+                Anuluj
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                disabled={deleting}
+                className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-60"
+              >
+                {deleting ? "Usuwanie..." : "Usuń"}
+              </button>
             </div>
           </div>
         </div>
