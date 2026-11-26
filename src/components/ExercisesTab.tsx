@@ -111,6 +111,7 @@ export default function ExercisesTab() {
   const [error, setError] = useState<string>("");
   const [selected, setSelected] = useState<Exercise | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -130,6 +131,7 @@ export default function ExercisesTab() {
       if (event.key === "Escape") {
         setSelected(null);
         setFormOpen(false);
+        setEditingId(null);
         setPendingDelete(null);
       }
     };
@@ -252,9 +254,29 @@ export default function ExercisesTab() {
   };
 
   const openForm = () => {
+    setEditingId(null);
     setForm(emptyForm);
     setFormError("");
     setFormOpen(true);
+  };
+
+  const openEditForm = (exercise: Exercise) => {
+    setEditingId(exercise.id);
+    setForm({
+      name: exercise.name,
+      muscleGroupId: exercise.muscleGroup ? String(exercise.muscleGroup.id) : "",
+      equipmentNeeded: exercise.equipmentNeeded ?? "",
+      description: exercise.description ?? "",
+    });
+    setFormError("");
+    setFormOpen(true);
+  };
+
+  const closeForm = () => {
+    if (saving) return;
+    setFormOpen(false);
+    setEditingId(null);
+    setFormError("");
   };
 
   const saveExercise = async () => {
@@ -271,9 +293,14 @@ export default function ExercisesTab() {
     setSaving(true);
     setFormError("");
 
+    const isEditing = editingId !== null;
+    const url = isEditing
+      ? `http://localhost:5062/api/exercises/${editingId}`
+      : "http://localhost:5062/api/exercises";
+
     try {
-      const response = await fetch("http://localhost:5062/api/exercises", {
-        method: "POST",
+      const response = await fetch(url, {
+        method: isEditing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
@@ -284,16 +311,24 @@ export default function ExercisesTab() {
       });
 
       if (!response.ok) {
-        const message = await response.text();
+        const message = (await response.text()).trim();
         throw new Error(message || "Nie udało się zapisać ćwiczenia.");
       }
 
-      const created: Exercise = await response.json();
-      setExercises((current) => [...current, created]);
+      const saved: Exercise = await response.json();
+      if (isEditing) {
+        setExercises((current) =>
+          current.map((item) => (item.id === saved.id ? saved : item)),
+        );
+        setSelected((current) => (current?.id === saved.id ? saved : current));
+      } else {
+        setExercises((current) => [...current, saved]);
+      }
       setFormOpen(false);
+      setEditingId(null);
       setForm(emptyForm);
-    } catch (err: any) {
-      setFormError(err.message || "Błąd połączenia z serwerem.");
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : "Błąd połączenia z serwerem.");
     } finally {
       setSaving(false);
     }
@@ -541,13 +576,22 @@ export default function ExercisesTab() {
                   Szczegóły &rarr;
                 </button>
                 {!error && (
-                  <button
-                    type="button"
-                    onClick={() => requestDelete(exercise)}
-                    className="font-semibold text-red-300 hover:underline"
-                  >
-                    Usuń
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => openEditForm(exercise)}
+                      className="font-semibold text-gray-300 hover:text-white hover:underline"
+                    >
+                      Edytuj
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => requestDelete(exercise)}
+                      className="font-semibold text-red-300 hover:underline"
+                    >
+                      Usuń
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -558,7 +602,7 @@ export default function ExercisesTab() {
       {formOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6"
-          onClick={() => setFormOpen(false)}
+          onClick={closeForm}
         >
           <div
             role="dialog"
@@ -569,12 +613,13 @@ export default function ExercisesTab() {
           >
             <div className="flex justify-between items-start gap-4">
               <h3 id="add-exercise-title" className="text-xl font-bold text-white">
-                Nowe ćwiczenie
+                {editingId !== null ? "Edytuj ćwiczenie" : "Nowe ćwiczenie"}
               </h3>
               <button
                 type="button"
-                onClick={() => setFormOpen(false)}
-                className="text-gray-400 hover:text-white text-sm"
+                onClick={closeForm}
+                disabled={saving}
+                className="text-gray-400 hover:text-white text-sm disabled:opacity-60"
               >
                 Zamknij
               </button>
@@ -649,8 +694,9 @@ export default function ExercisesTab() {
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setFormOpen(false)}
-                  className="rounded-xl px-4 py-2 text-sm text-gray-300 hover:text-white"
+                  onClick={closeForm}
+                  disabled={saving}
+                  className="rounded-xl px-4 py-2 text-sm text-gray-300 hover:text-white disabled:opacity-60"
                 >
                   Anuluj
                 </button>
