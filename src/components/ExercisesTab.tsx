@@ -1,4 +1,74 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import chestIcon from "../../ic_chip_chest_b.svg";
+import backIcon from "../../ic_chip_back_b.svg";
+import bicepsIcon from "../../chip_biceps_b.svg";
+import tricepsIcon from "../../chip_triceps_b.svg";
+import quadricepsIcon from "../../chip_quadriceps_b.svg";
+import hamstringsIcon from "../../chip_hamstrings_b.svg";
+import shouldersIcon from "../../ic_chip_shoulders_b.svg";
+import hipsIcon from "../../ic_chip_hips_b.svg";
+import absIcon from "../../chip_abs_b.svg";
+import calvesIcon from "../../ic_chip_calves_b.svg";
+import forearmsIcon from "../../ic_chip_forearms_b.svg";
+
+const muscleIcons: Record<string, string> = {
+  "Klatka piersiowa": chestIcon,
+  Plecy: backIcon,
+  Biceps: bicepsIcon,
+  Triceps: tricepsIcon,
+  "Czworogłowe uda": quadricepsIcon,
+  "Dwugłowe uda": hamstringsIcon,
+  Barki: shouldersIcon,
+  Biodra: hipsIcon,
+  Brzuch: absIcon,
+  Łydki: calvesIcon,
+  Przedramiona: forearmsIcon,
+};
+
+const muscleOrder = [
+  "Cardio",
+  "Łydki",
+  "Czworogłowe uda",
+  "Dwugłowe uda",
+  "Biodra",
+  "Brzuch",
+  "Plecy",
+  "Klatka piersiowa",
+  "Barki",
+  "Biceps",
+  "Triceps",
+  "Przedramiona",
+];
+
+function orderGroups(groups: MuscleGroup[]) {
+  return groups
+    .filter((group) => group.name !== "Nogi")
+    .sort((a, b) => {
+      const aIndex = muscleOrder.indexOf(a.name);
+      const bIndex = muscleOrder.indexOf(b.name);
+      return (aIndex === -1 ? muscleOrder.length : aIndex) -
+        (bIndex === -1 ? muscleOrder.length : bIndex);
+    });
+}
+
+function HeartPulseIcon() {
+  return (
+    <svg viewBox="0 0 48 48" aria-hidden="true" className="h-11 w-11">
+      <path
+        d="M24 39.5c-.4 0-12.8-7.2-16.4-14.4C4.8 20.2 7.2 13.6 13.4 12.8c3.4-.4 6.2 1.2 8.2 4.2 1.1 1.6 1.6 2.2 2.4 2.2s1.3-.6 2.4-2.2c2-3 4.8-4.6 8.2-4.2 6.2.8 8.6 7.4 5.8 12.3C36.8 32.3 24.4 39.5 24 39.5z"
+        fill="#E74C3C"
+      />
+      <path
+        d="M7 24.5h7.2l2.6-5.2 4.4 9.2 2.8-4h16"
+        fill="none"
+        stroke="#1c1c1c"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 interface MuscleGroup {
   id: number;
@@ -20,6 +90,20 @@ const emptyForm = {
   description: "",
 };
 
+const FAVORITES_KEY = "fitforge-favorites";
+
+function readFavorites(): number[] {
+  try {
+    const raw = localStorage.getItem(FAVORITES_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed)
+      ? parsed.filter((id) => typeof id === "number")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
 export default function ExercisesTab() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [muscleGroups, setMuscleGroups] = useState<MuscleGroup[]>([]);
@@ -30,6 +114,11 @@ export default function ExercisesTab() {
   const [form, setForm] = useState(emptyForm);
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [query, setQuery] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [selectedGroupIds, setSelectedGroupIds] = useState<number[]>([]);
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [favoriteIds, setFavoriteIds] = useState<number[]>(readFavorites);
 
   useEffect(() => {
     if (!selected && !formOpen) return;
@@ -76,7 +165,7 @@ export default function ExercisesTab() {
           {
             id: 2,
             name: "Przysiady ze sztangą na plecach",
-            muscleGroup: { id: 2, name: "Nogi" },
+            muscleGroup: { id: 9, name: "Czworogłowe uda" },
             equipmentNeeded: "Sztanga, stojaki",
           },
           {
@@ -111,6 +200,52 @@ export default function ExercisesTab() {
 
     fetchExercises();
   }, []);
+
+  const groups = useMemo(() => {
+    if (muscleGroups.length > 0) return orderGroups(muscleGroups);
+
+    const byId = new Map<number, MuscleGroup>();
+    for (const exercise of exercises) {
+      if (exercise.muscleGroup) byId.set(exercise.muscleGroup.id, exercise.muscleGroup);
+    }
+    return orderGroups(Array.from(byId.values()));
+  }, [muscleGroups, exercises]);
+
+  const visibleExercises = useMemo(() => {
+    const needle = query.trim().toLocaleLowerCase("pl");
+
+    return exercises.filter((exercise) => {
+      const matchesName =
+        needle.length === 0 ||
+        exercise.name.toLocaleLowerCase("pl").includes(needle);
+      const matchesGroup =
+        selectedGroupIds.length === 0 ||
+        (exercise.muscleGroup != null &&
+          selectedGroupIds.includes(exercise.muscleGroup.id));
+      const matchesFavorite =
+        !favoritesOnly || favoriteIds.includes(exercise.id);
+
+      return matchesName && matchesGroup && matchesFavorite;
+    });
+  }, [exercises, query, selectedGroupIds, favoritesOnly, favoriteIds]);
+
+  const toggleGroup = (id: number) => {
+    setSelectedGroupIds((current) =>
+      current.includes(id)
+        ? current.filter((item) => item !== id)
+        : [...current, id],
+    );
+  };
+
+  const toggleFavorite = (id: number) => {
+    setFavoriteIds((current) => {
+      const next = current.includes(id)
+        ? current.filter((item) => item !== id)
+        : [...current, id];
+      localStorage.setItem(FAVORITES_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
 
   const openForm = () => {
     setForm(emptyForm);
@@ -162,15 +297,125 @@ export default function ExercisesTab() {
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4">
-      {!loading && !error && (
-        <div className="mb-6 flex justify-end">
-          <button
-            type="button"
-            onClick={openForm}
-            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
-          >
-            Dodaj ćwiczenie
-          </button>
+      {!loading && (
+        <div className="mb-6 space-y-3">
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+            <div />
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Szukaj ćwiczenia po nazwie"
+              aria-label="Szukaj ćwiczenia po nazwie"
+              className="w-80 rounded-full border border-gray-600 bg-gray-900 px-5 py-2.5 text-base text-white placeholder:text-gray-500 sm:w-96"
+            />
+            {!error ? (
+              <button
+                type="button"
+                onClick={openForm}
+                className="justify-self-end rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
+              >
+                Dodaj ćwiczenie
+              </button>
+            ) : (
+              <div />
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              aria-label="Ulubione"
+              aria-pressed={favoritesOnly}
+              onClick={() => setFavoritesOnly((current) => !current)}
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border ${
+                favoritesOnly
+                  ? "border-amber-400 bg-amber-950/40 text-amber-200"
+                  : "border-gray-600 bg-gray-800 text-gray-200 hover:border-gray-500"
+              }`}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                className="h-5 w-5"
+                fill={favoritesOnly ? "currentColor" : "none"}
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6.5 4.75h11a1 1 0 0 1 1 1v14.1a.6.6 0 0 1-.94.5L12 16.4l-5.56 4a.6.6 0 0 1-.94-.5V5.75a1 1 0 0 1 1-1Z"
+                />
+              </svg>
+            </button>
+
+            <div className="flex min-w-0 flex-1 flex-wrap justify-center gap-2">
+              {filtersOpen &&
+                groups.map((group) => {
+                  const active = selectedGroupIds.includes(group.id);
+                  const icon = muscleIcons[group.name];
+                  const isPulse = group.name === "Cardio";
+                  return (
+                    <button
+                      key={group.id}
+                      type="button"
+                      aria-label={group.name}
+                      title={group.name}
+                      aria-pressed={active}
+                      onClick={() => toggleGroup(group.id)}
+                      className={
+                        icon || isPulse
+                          ? `flex h-12 w-12 items-center justify-center overflow-hidden rounded-md border ${
+                              active
+                                ? "border-blue-400 bg-gray-800"
+                                : "border-gray-600 bg-gray-900 hover:border-gray-500"
+                            }`
+                          : `rounded-md border px-3 py-1.5 text-sm ${
+                              active
+                                ? "border-blue-400 bg-blue-600 text-white"
+                                : "border-gray-600 bg-gray-900 text-gray-300 hover:border-gray-500"
+                            }`
+                      }
+                    >
+                      {isPulse ? (
+                        <HeartPulseIcon />
+                      ) : icon ? (
+                        <img src={icon} alt="" className="h-11 w-11" />
+                      ) : (
+                        group.name
+                      )}
+                    </button>
+                  );
+                })}
+            </div>
+
+            <button
+              type="button"
+              aria-label="Filtry"
+              aria-expanded={filtersOpen}
+              onClick={() => setFiltersOpen((open) => !open)}
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border ${
+                filtersOpen || selectedGroupIds.length > 0
+                  ? "border-blue-500 bg-blue-950/50 text-blue-200"
+                  : "border-gray-600 bg-gray-800 text-gray-200 hover:border-gray-500"
+              }`}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
+                <path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16" />
+                <circle cx="9" cy="7" r="2.1" fill="currentColor" stroke="none" />
+                <circle cx="15" cy="12" r="2.1" fill="currentColor" stroke="none" />
+                <circle cx="8" cy="17" r="2.1" fill="currentColor" stroke="none" />
+              </svg>
+            </button>
+          </div>
         </div>
       )}
       {loading && (
@@ -185,9 +430,15 @@ export default function ExercisesTab() {
         </div>
       )}
 
-      {!loading && (
+      {!loading && visibleExercises.length === 0 && (
+        <p className="py-8 text-center text-sm text-gray-400">
+          Brak ćwiczeń dla tych filtrów.
+        </p>
+      )}
+
+      {!loading && visibleExercises.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {exercises.map((exercise) => (
+          {visibleExercises.map((exercise) => (
             <div
               key={exercise.id}
               className="bg-gray-800 border border-gray-700/80 rounded-2xl p-6 shadow-xl hover:border-blue-500 hover:shadow-2xl transition-all duration-300 flex flex-col justify-between group"
@@ -197,9 +448,23 @@ export default function ExercisesTab() {
                   <h3 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors">
                     {exercise.name}
                   </h3>
-                  <span className="text-xs bg-gray-700 text-gray-300 px-2.5 py-1 rounded-full font-semibold border border-gray-600">
-                    #{exercise.id}
-                  </span>
+                  <button
+                    type="button"
+                    aria-pressed={favoriteIds.includes(exercise.id)}
+                    aria-label={
+                      favoriteIds.includes(exercise.id)
+                        ? "Usuń z ulubionych"
+                        : "Dodaj do ulubionych"
+                    }
+                    onClick={() => toggleFavorite(exercise.id)}
+                    className={`text-lg leading-none ${
+                      favoriteIds.includes(exercise.id)
+                        ? "text-amber-300"
+                        : "text-gray-500 hover:text-amber-200"
+                    }`}
+                  >
+                    {favoriteIds.includes(exercise.id) ? "★" : "☆"}
+                  </button>
                 </div>
 
                 <div className="space-y-2 text-sm text-gray-300">
@@ -289,7 +554,7 @@ export default function ExercisesTab() {
                   className="mt-1 w-full rounded-xl border border-gray-600 bg-gray-900 px-3 py-2 text-white"
                 >
                   <option value="">Wybierz</option>
-                  {muscleGroups.map((group) => (
+                  {groups.map((group) => (
                     <option key={group.id} value={group.id}>
                       {group.name}
                     </option>
