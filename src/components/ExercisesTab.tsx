@@ -1,15 +1,16 @@
 import { useState, useEffect, useMemo } from "react";
-import chestIcon from "../../ic_chip_chest_b.svg";
-import backIcon from "../../ic_chip_back_b.svg";
-import bicepsIcon from "../../chip_biceps_b.svg";
-import tricepsIcon from "../../chip_triceps_b.svg";
-import quadricepsIcon from "../../chip_quadriceps_b.svg";
-import hamstringsIcon from "../../chip_hamstrings_b.svg";
-import shouldersIcon from "../../ic_chip_shoulders_b.svg";
-import hipsIcon from "../../ic_chip_hips_b.svg";
-import absIcon from "../../chip_abs_b.svg";
-import calvesIcon from "../../ic_chip_calves_b.svg";
-import forearmsIcon from "../../ic_chip_forearms_b.svg";
+import { getExerciseArt } from "../exerciseArt";
+import chestIcon from "../assets/muscles/chest.svg";
+import backIcon from "../assets/muscles/back.svg";
+import bicepsIcon from "../assets/muscles/biceps.svg";
+import tricepsIcon from "../assets/muscles/triceps.svg";
+import quadricepsIcon from "../assets/muscles/quadriceps.svg";
+import hamstringsIcon from "../assets/muscles/hamstrings.svg";
+import shouldersIcon from "../assets/muscles/shoulders.svg";
+import hipsIcon from "../assets/muscles/hips.svg";
+import absIcon from "../assets/muscles/abs.svg";
+import calvesIcon from "../assets/muscles/calves.svg";
+import forearmsIcon from "../assets/muscles/forearms.svg";
 
 const muscleIcons: Record<string, string> = {
   "Klatka piersiowa": chestIcon,
@@ -51,9 +52,9 @@ function orderGroups(groups: MuscleGroup[]) {
     });
 }
 
-function HeartPulseIcon() {
+function HeartPulseIcon({ className = "h-11 w-11" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 48 48" aria-hidden="true" className="h-11 w-11">
+    <svg viewBox="0 0 48 48" aria-hidden="true" className={className}>
       <path
         d="M24 39.5c-.4 0-12.8-7.2-16.4-14.4C4.8 20.2 7.2 13.6 13.4 12.8c3.4-.4 6.2 1.2 8.2 4.2 1.1 1.6 1.6 2.2 2.4 2.2s1.3-.6 2.4-2.2c2-3 4.8-4.6 8.2-4.2 6.2.8 8.6 7.4 5.8 12.3C36.8 32.3 24.4 39.5 24 39.5z"
         fill="#E74C3C"
@@ -80,12 +81,14 @@ interface Exercise {
   name: string;
   description?: string;
   muscleGroup?: MuscleGroup;
+  secondaryMuscleGroups?: MuscleGroup[];
   equipmentNeeded?: string;
 }
 
 const emptyForm = {
   name: "",
   muscleGroupId: "",
+  secondaryMuscleGroupIds: [] as number[],
   equipmentNeeded: "",
   description: "",
 };
@@ -213,6 +216,9 @@ export default function ExercisesTab() {
     const byId = new Map<number, MuscleGroup>();
     for (const exercise of exercises) {
       if (exercise.muscleGroup) byId.set(exercise.muscleGroup.id, exercise.muscleGroup);
+      for (const secondary of exercise.secondaryMuscleGroups ?? []) {
+        byId.set(secondary.id, secondary);
+      }
     }
     return orderGroups(Array.from(byId.values()));
   }, [muscleGroups, exercises]);
@@ -224,10 +230,13 @@ export default function ExercisesTab() {
       const matchesName =
         needle.length === 0 ||
         exercise.name.toLocaleLowerCase("pl").includes(needle);
+      const exerciseGroupIds = [
+        ...(exercise.muscleGroup ? [exercise.muscleGroup.id] : []),
+        ...(exercise.secondaryMuscleGroups ?? []).map((group) => group.id),
+      ];
       const matchesGroup =
         selectedGroupIds.length === 0 ||
-        (exercise.muscleGroup != null &&
-          selectedGroupIds.includes(exercise.muscleGroup.id));
+        exerciseGroupIds.some((id) => selectedGroupIds.includes(id));
       const matchesFavorite =
         !favoritesOnly || favoriteIds.includes(exercise.id);
 
@@ -265,11 +274,23 @@ export default function ExercisesTab() {
     setForm({
       name: exercise.name,
       muscleGroupId: exercise.muscleGroup ? String(exercise.muscleGroup.id) : "",
+      secondaryMuscleGroupIds: (exercise.secondaryMuscleGroups ?? []).map(
+        (group) => group.id,
+      ),
       equipmentNeeded: exercise.equipmentNeeded ?? "",
       description: exercise.description ?? "",
     });
     setFormError("");
     setFormOpen(true);
+  };
+
+  const toggleFormSecondaryGroup = (id: number) => {
+    setForm((current) => ({
+      ...current,
+      secondaryMuscleGroupIds: current.secondaryMuscleGroupIds.includes(id)
+        ? current.secondaryMuscleGroupIds.filter((item) => item !== id)
+        : [...current.secondaryMuscleGroupIds, id],
+    }));
   };
 
   const closeForm = () => {
@@ -305,6 +326,7 @@ export default function ExercisesTab() {
         body: JSON.stringify({
           name,
           muscleGroupId: Number(form.muscleGroupId),
+          secondaryMuscleGroupIds: form.secondaryMuscleGroupIds,
           equipmentNeeded: form.equipmentNeeded.trim(),
           description: form.description.trim(),
         }),
@@ -515,87 +537,143 @@ export default function ExercisesTab() {
 
       {!loading && visibleExercises.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {visibleExercises.map((exercise) => (
-            <div
-              key={exercise.id}
-              className="bg-surface border border-line rounded-2xl p-6 hover:border-mint/60 transition-colors flex flex-col justify-between group"
-            >
-              <div>
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="text-lg font-bold text-white group-hover:text-mint transition-colors">
-                    {exercise.name}
-                  </h3>
-                  <button
-                    type="button"
-                    aria-pressed={favoriteIds.includes(exercise.id)}
-                    aria-label={
-                      favoriteIds.includes(exercise.id)
-                        ? "Usuń z ulubionych"
-                        : "Dodaj do ulubionych"
-                    }
-                    onClick={() => toggleFavorite(exercise.id)}
-                    className={`text-lg leading-none ${
-                      favoriteIds.includes(exercise.id)
-                        ? "text-amber-300"
-                        : "text-muted hover:text-amber-200"
-                    }`}
-                  >
-                    {favoriteIds.includes(exercise.id) ? "★" : "☆"}
-                  </button>
-                </div>
+          {visibleExercises.map((exercise) => {
+            const art = getExerciseArt(exercise.name);
+            const groupName = exercise.muscleGroup?.name;
+            const groupIcon = groupName ? muscleIcons[groupName] : undefined;
+            const isCardio = groupName === "Cardio";
 
-                <div className="space-y-2 text-sm text-mist">
-                  {exercise.muscleGroup?.name && (
-                    <p className="flex items-center space-x-2">
-                      <span className="text-muted">Partia:</span>
-                      <span className="font-medium text-mint bg-mint/10 px-2 py-0.5 rounded border border-mint/25">
-                        {exercise.muscleGroup.name}
-                      </span>
-                    </p>
-                  )}
-                  {exercise.equipmentNeeded && (
-                    <p className="text-muted">
-                      <span className="text-muted font-medium">Sprzęt:</span>{" "}
-                      {exercise.equipmentNeeded}
-                    </p>
-                  )}
-                  {exercise.description && (
-                    <p className="mt-3 text-muted text-xs leading-relaxed line-clamp-3">
-                      {exercise.description}
-                    </p>
-                  )}
-                </div>
-              </div>
+            return (
+              <div
+                key={exercise.id}
+                className="bg-surface border border-line rounded-2xl p-6 hover:border-mint/60 transition-colors flex flex-col justify-between group"
+              >
+                <div>
+                  {(art || groupIcon || isCardio) && (
+                    <div className="relative mb-4 flex h-44 items-center justify-center overflow-hidden rounded-xl border border-line bg-inset p-3">
+                      {art ? (
+                        <img
+                          src={art}
+                          alt={exercise.name}
+                          loading="lazy"
+                          className="max-h-36 max-w-full object-contain invert opacity-90"
+                        />
+                      ) : isCardio ? (
+                        <HeartPulseIcon className="h-20 w-20" />
+                      ) : groupIcon ? (
+                        <img
+                          src={groupIcon}
+                          alt={groupName ?? ""}
+                          className="h-20 w-20 object-contain"
+                        />
+                      ) : null}
 
-              <div className="mt-6 pt-4 border-t border-line flex justify-between items-center text-xs text-muted">
-                <button
-                  type="button"
-                  onClick={() => setSelected(exercise)}
-                  className="text-mint font-semibold hover:underline"
-                >
-                  Szczegóły &rarr;
-                </button>
-                {!error && (
-                  <div className="flex items-center gap-3">
+                      {art && (groupIcon || isCardio) && (
+                        <div
+                          title={groupName}
+                          className="absolute right-2 bottom-2 flex h-10 w-10 items-center justify-center rounded-lg border border-line bg-surface/90 p-0.5"
+                        >
+                          {isCardio ? (
+                            <HeartPulseIcon className="h-8 w-8" />
+                          ) : (
+                            <img
+                              src={groupIcon}
+                              alt=""
+                              className="h-9 w-9 object-contain"
+                            />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-start gap-2 mb-3">
+                    <h3 className="text-lg font-bold text-white group-hover:text-mint transition-colors">
+                      {exercise.name}
+                    </h3>
                     <button
                       type="button"
-                      onClick={() => openEditForm(exercise)}
-                      className="font-semibold text-mist hover:text-white hover:underline"
+                      aria-pressed={favoriteIds.includes(exercise.id)}
+                      aria-label={
+                        favoriteIds.includes(exercise.id)
+                          ? "Usuń z ulubionych"
+                          : "Dodaj do ulubionych"
+                      }
+                      onClick={() => toggleFavorite(exercise.id)}
+                      className={`text-lg leading-none ${
+                        favoriteIds.includes(exercise.id)
+                          ? "text-amber-300"
+                          : "text-muted hover:text-amber-200"
+                      }`}
                     >
-                      Edytuj
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => requestDelete(exercise)}
-                      className="font-semibold text-red-300 hover:underline"
-                    >
-                      Usuń
+                      {favoriteIds.includes(exercise.id) ? "★" : "☆"}
                     </button>
                   </div>
-                )}
+
+                  <div className="space-y-2 text-sm text-mist">
+                    {(exercise.muscleGroup?.name ||
+                      (exercise.secondaryMuscleGroups?.length ?? 0) > 0) && (
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="text-muted">
+                          {(exercise.secondaryMuscleGroups?.length ?? 0) > 0
+                            ? "Partie:"
+                            : "Partia:"}
+                        </span>
+                        {exercise.muscleGroup?.name && (
+                          <span className="font-medium text-mint bg-mint/10 px-2 py-0.5 rounded border border-mint/25">
+                            {exercise.muscleGroup.name}
+                          </span>
+                        )}
+                        {(exercise.secondaryMuscleGroups ?? []).map((group) => (
+                          <span
+                            key={group.id}
+                            title="Partia pomocnicza"
+                            className="text-xs text-mist bg-inset px-2 py-0.5 rounded border border-line"
+                          >
+                            {group.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {exercise.equipmentNeeded && (
+                      <p className="text-muted">
+                        <span className="text-muted font-medium">Sprzęt:</span>{" "}
+                        {exercise.equipmentNeeded}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-line flex justify-between items-center text-xs text-muted">
+                  <button
+                    type="button"
+                    onClick={() => setSelected(exercise)}
+                    className="text-mint font-semibold hover:underline"
+                  >
+                    Szczegóły &rarr;
+                  </button>
+                  {!error && (
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => openEditForm(exercise)}
+                        className="font-semibold text-mist hover:text-white hover:underline"
+                      >
+                        Edytuj
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => requestDelete(exercise)}
+                        className="font-semibold text-red-300 hover:underline"
+                      >
+                        Usuń
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -608,7 +686,7 @@ export default function ExercisesTab() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="add-exercise-title"
-            className="w-full max-w-lg bg-surface border border-line rounded-2xl p-6 shadow-2xl"
+            className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-surface border border-line rounded-2xl p-6 shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex justify-between items-start gap-4">
@@ -638,15 +716,19 @@ export default function ExercisesTab() {
               </label>
 
               <label className="block text-sm text-mist">
-                Partia mięśniowa
+                Partia główna
                 <select
                   value={form.muscleGroupId}
-                  onChange={(event) =>
+                  onChange={(event) => {
+                    const nextPrimaryId = Number(event.target.value);
                     setForm((current) => ({
                       ...current,
                       muscleGroupId: event.target.value,
-                    }))
-                  }
+                      secondaryMuscleGroupIds: current.secondaryMuscleGroupIds.filter(
+                        (id) => id !== nextPrimaryId,
+                      ),
+                    }));
+                  }}
                   className="mt-1 w-full rounded-xl border border-line bg-inset px-3 py-2 text-white outline-none focus:border-mint"
                 >
                   <option value="">Wybierz</option>
@@ -657,6 +739,32 @@ export default function ExercisesTab() {
                   ))}
                 </select>
               </label>
+
+              <div className="block text-sm text-mist">
+                <span>Partie pomocnicze (opcjonalnie)</span>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {groups
+                    .filter((group) => String(group.id) !== form.muscleGroupId)
+                    .map((group) => {
+                      const active = form.secondaryMuscleGroupIds.includes(group.id);
+                      return (
+                        <button
+                          key={group.id}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => toggleFormSecondaryGroup(group.id)}
+                          className={`rounded-lg border px-2.5 py-1 text-xs transition-colors ${
+                            active
+                              ? "border-mint bg-mint/15 text-mint"
+                              : "border-line bg-inset text-mist hover:border-mint/50"
+                          }`}
+                        >
+                          {group.name}
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
 
               <label className="block text-sm text-mist">
                 Sprzęt
@@ -755,54 +863,142 @@ export default function ExercisesTab() {
         </div>
       )}
 
-      {selected && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-6"
-          onClick={() => setSelected(null)}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="exercise-details-title"
-            className="w-full max-w-lg bg-surface border border-line rounded-2xl p-6 shadow-2xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex justify-between items-start gap-4">
-              <h3
-                id="exercise-details-title"
-                className="text-xl font-bold text-white"
-              >
-                {selected.name}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setSelected(null)}
-                className="text-muted hover:text-white text-sm"
-              >
-                Zamknij
-              </button>
-            </div>
+      {selected && (() => {
+        const selectedArt = getExerciseArt(selected.name);
+        const selectedGroup = selected.muscleGroup?.name;
+        const selectedGroupIcon = selectedGroup ? muscleIcons[selectedGroup] : undefined;
+        const selectedIsCardio = selectedGroup === "Cardio";
+        const selectedSecondary = selected.secondaryMuscleGroups ?? [];
+        const allChipGroups = [
+          ...(selected.muscleGroup ? [{ ...selected.muscleGroup, primary: true }] : []),
+          ...selectedSecondary.map((group) => ({ ...group, primary: false })),
+        ];
 
-            <div className="mt-4 space-y-2 text-sm text-mist">
-              {selected.muscleGroup?.name && (
-                <p>
-                  <span className="text-muted">Partia: </span>
-                  {selected.muscleGroup.name}
-                </p>
+        return (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-6"
+            onClick={() => setSelected(null)}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="exercise-details-title"
+              className="w-full max-w-lg bg-surface border border-line rounded-2xl p-6 shadow-2xl"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="flex justify-between items-start gap-4">
+                <h3
+                  id="exercise-details-title"
+                  className="text-xl font-bold text-white"
+                >
+                  {selected.name}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setSelected(null)}
+                  className="text-muted hover:text-white text-sm"
+                >
+                  Zamknij
+                </button>
+              </div>
+
+              {(selectedArt || selectedGroupIcon || selectedIsCardio) && (
+                <div className="relative mt-4 flex h-56 items-center justify-center overflow-hidden rounded-xl border border-line bg-inset p-4">
+                  {selectedArt ? (
+                    <img
+                      src={selectedArt}
+                      alt={selected.name}
+                      className="max-h-48 max-w-full object-contain invert opacity-90"
+                    />
+                  ) : selectedIsCardio ? (
+                    <HeartPulseIcon className="h-24 w-24" />
+                  ) : selectedGroupIcon ? (
+                    <img
+                      src={selectedGroupIcon}
+                      alt={selectedGroup ?? ""}
+                      className="h-24 w-24 object-contain"
+                    />
+                  ) : null}
+
+                  {selectedArt && allChipGroups.length > 0 && (
+                    <div className="absolute right-3 bottom-3 flex items-center gap-1.5">
+                      {allChipGroups.map((group) => {
+                        const chipIcon = muscleIcons[group.name];
+                        const chipIsCardio = group.name === "Cardio";
+                        if (!chipIcon && !chipIsCardio) return null;
+                        return (
+                          <div
+                            key={`${group.primary ? "p" : "s"}-${group.id}`}
+                            title={
+                              group.primary
+                                ? `${group.name} (główna)`
+                                : `${group.name} (pomocnicza)`
+                            }
+                            className={`flex items-center justify-center rounded-lg border bg-surface/90 p-1 ${
+                              group.primary
+                                ? "h-12 w-12 border-mint/60"
+                                : "h-10 w-10 border-line opacity-85"
+                            }`}
+                          >
+                            {chipIsCardio ? (
+                              <HeartPulseIcon
+                                className={group.primary ? "h-10 w-10" : "h-8 w-8"}
+                              />
+                            ) : (
+                              <img
+                                src={chipIcon}
+                                alt=""
+                                className={
+                                  group.primary
+                                    ? "h-10 w-10 object-contain"
+                                    : "h-8 w-8 object-contain"
+                                }
+                              />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               )}
-              {selected.equipmentNeeded && (
-                <p>
-                  <span className="text-muted">Sprzęt: </span>
-                  {selected.equipmentNeeded}
+
+              <div className="mt-4 space-y-2 text-sm text-mist">
+                {selected.muscleGroup?.name && (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-muted">Partia główna:</span>
+                    <span className="font-medium text-mint bg-mint/10 px-2 py-0.5 rounded border border-mint/25">
+                      {selected.muscleGroup.name}
+                    </span>
+                  </div>
+                )}
+                {selectedSecondary.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-muted">Partie pomocnicze:</span>
+                    {selectedSecondary.map((group) => (
+                      <span
+                        key={group.id}
+                        className="text-xs text-mist bg-inset px-2 py-0.5 rounded border border-line"
+                      >
+                        {group.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {selected.equipmentNeeded && (
+                  <p>
+                    <span className="text-muted">Sprzęt: </span>
+                    {selected.equipmentNeeded}
+                  </p>
+                )}
+                <p className="pt-2 text-mist leading-relaxed">
+                  {selected.description || "Opis ćwiczenia."}
                 </p>
-              )}
-              <p className="pt-2 text-mist leading-relaxed">
-                {selected.description || "Opis ćwiczenia."}
-              </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

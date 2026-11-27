@@ -9,6 +9,7 @@ interface Exercise {
   id: number;
   name: string;
   muscleGroup?: MuscleGroup;
+  secondaryMuscleGroups?: MuscleGroup[];
 }
 
 interface DraftSet {
@@ -432,7 +433,12 @@ export default function WorkoutPlanTab() {
                   >
                     <span className="block font-medium text-white">{exercise.name}</span>
                     {exercise.muscleGroup?.name && (
-                      <span className="block text-xs text-muted">{exercise.muscleGroup.name}</span>
+                      <span className="block text-xs text-muted">
+                        {[
+                          exercise.muscleGroup.name,
+                          ...(exercise.secondaryMuscleGroups ?? []).map((g) => g.name),
+                        ].join(" · ")}
+                      </span>
                     )}
                   </button>
                 </li>
